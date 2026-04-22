@@ -26,7 +26,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to ChatBotVectorialDB API"}
+    return {"message": "Welcome to FAQTI API"}
 
 # Initialize Telegram Bot
 bot = Bot(token=settings.TELEGRAM_TOKEN)
