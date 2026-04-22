@@ -6,7 +6,7 @@ services:
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.0
+        value: 3.11.0
       - key: OPENAI_API_KEY
         sync: false
       - key: PINECONE_API_KEY
