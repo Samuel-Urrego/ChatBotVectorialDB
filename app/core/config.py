@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     PINECONE_ENVIRONMENT: str = "us-east-1"
     PINECONE_INDEX_NAME: str
     DATABASE_URL: str
+    TELEGRAM_TOKEN: str
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env", extra="ignore")
 

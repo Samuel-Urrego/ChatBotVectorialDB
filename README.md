@@ -10,6 +10,7 @@ ChatBotVectorialDB es un backend profesional desarrollado con **FastAPI**, **Lan
 - **Base de Datos Vectorial**: Integración con Pinecone para búsquedas semánticas rápidas.
 - **Asistente Especializado**: Prompt de sistema configurado para actuar como un asistente legal corporativo estricto.
 - **CORS Configurado**: Listo para ser consumido por aplicaciones Blazor o cualquier cliente frontend.
+- **Bot de Telegram**: Integración vía webhook para consultas directas.
 
 ## 🛠️ Tecnologías
 
@@ -17,6 +18,20 @@ ChatBotVectorialDB es un backend profesional desarrollado con **FastAPI**, **Lan
 - [LangChain](https://www.langchain.com/) - Orquestación de LLMs y RAG.
 - [Pinecone](https://www.pinecone.io/) - Base de datos vectorial.
 - [OpenAI](https://openai.com/) - LLM (GPT-4o-mini) y Embeddings.
+- [Telegram Bot API](https://python-telegram-bot.org/) - Integración con mensajería.
+
+---
+
+## 🤖 Bot de Telegram
+
+El proyecto incluye una integración nativa con Telegram. Para activarlo:
+
+1. Crea un bot con [@BotFather](https://t.me/botfather).
+2. Obtén el `TELEGRAM_TOKEN`.
+3. Configura el Webhook:
+   ```bash
+   curl -X POST "https://api.telegram.org/bot<TU_TOKEN>/setWebhook?url=<TU_URL>/telegram-webhook"
+   ```
 
 ---
 
@@ -50,7 +65,19 @@ PINECONE_API_KEY=tu_clave_de_pinecone
 PINECONE_INDEX_NAME=chatbotvectorialdb
 PINECONE_ENVIRONMENT=us-east-1
 DATABASE_URL=sqlite:///./sql_app.db
+TELEGRAM_TOKEN=tu_token_de_telegram
 ```
+
+---
+
+## 🌐 Despliegue en Render
+
+Este proyecto está listo para ser desplegado en [Render](https://render.com/).
+
+1. Sube el código a un repositorio de GitHub.
+2. En Render, crea un nuevo **Blueprints** y conecta tu repositorio.
+3. El archivo `render.yaml` configurará automáticamente el servicio.
+4. Asegúrate de configurar las **Environment Variables** en el dashboard de Render.
 
 ---
 
@@ -86,16 +113,8 @@ Realiza una pregunta al asistente legal.
 }
 ```
 
-**Response:**
-```json
-{
-  "answer": "La respuesta generada por la IA...",
-  "sources": [
-    "documento_legal_1.pdf (página 5)",
-    "reglamento_interno.pdf (página 12)"
-  ]
-}
-```
+### `POST /telegram-webhook`
+Endpoint para recibir actualizaciones de Telegram vía Webhook.
 
 ---
 
