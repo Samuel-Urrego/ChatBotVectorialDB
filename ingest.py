@@ -25,7 +25,7 @@ def ingest_documents(directory_path: str = "./data"):
         print(f"Creating index: {index_name} in region {region}")
         pc.create_index(
             name=index_name,
-            dimension=2048,
+            dimension=1024,
             metric='cosine',
             spec=ServerlessSpec(
                 cloud='aws',
@@ -58,7 +58,7 @@ def ingest_documents(directory_path: str = "./data"):
     print(f"Generating embeddings and uploading {len(docs)} chunks to Pinecone...")
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-large",
-        dimensions=2048
+        dimensions=1024
     )
     
     PineconeVectorStore.from_documents(

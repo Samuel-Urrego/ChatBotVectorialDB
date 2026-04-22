@@ -20,7 +20,7 @@ class ChatService:
         if index_name not in pc.list_indexes().names():
             pc.create_index(
                 name=index_name,
-                dimension=2048,
+                dimension=1024,
                 metric='cosine',
                 spec=ServerlessSpec(
                     cloud='aws',
@@ -30,7 +30,7 @@ class ChatService:
 
         self.embeddings = OpenAIEmbeddings(
             model="text-embedding-3-large",
-            dimensions=2048,
+            dimensions=1024,
             openai_api_key=settings.OPENAI_API_KEY
         )
         self.vector_store = PineconeVectorStore(
@@ -44,15 +44,25 @@ class ChatService:
             openai_api_key=settings.OPENAI_API_KEY
         )
         
-        # Custom strict prompt for legal corporate assistant
-        template = """Eres un asistente legal corporativo. Responde ÚNICAMENTE basándote en el contexto proporcionado. 
-Si la respuesta no está en el reglamento, di que no lo sabes.
+        # Custom strict prompt for IT Support Assistant
+        template = """Eres el Asistente Virtual de Soporte TI de la Empresa. Tu propósito es ayudar a los colaboradores a resolver problemas técnicos de manera rápida y amable.
+
+Reglas de oro:
+1. Fidelidad al Contexto: Responde ÚNICAMENTE basándote en la información proporcionada en el manual de FAQ TI . Si la solución no se encuentra en el manual, no inventes una respuesta; indica amablemente que el usuario debe contactar directamente al área de soporte o esperar el tiempo de desbloqueo automático si aplica.
+2. Instrucciones Claras: Proporciona soluciones paso a paso. Por ejemplo, si el equipo está lento, sugiere cerrar programas y reiniciar.
+3. Seguridad Primero: Si el usuario reporta un correo o link sospechoso, enfatiza que NO debe abrirlo ni acceder a él.
+4. Tono Profesional: Mantén un lenguaje técnico pero accesible, orientado a la resolución de problemas.
+
+Ejemplos de respuestas basadas en tus fuentes:
+- Si preguntan por contraseñas olvidadas: Indica que usen la opción "¿Olvidaste tu contraseña?" para recibir el enlace en su correo.
+- Si preguntan por cuentas bloqueadas: Sugiere esperar unos minutos o solicitar el desbloqueo a TI.
+- Si el equipo no enciende: Pide verificar energía y cables.
 
 Contexto:
 {context}
 
 Pregunta: {question}
-Respuesta Legal:"""
+Respuesta de Soporte TI:"""
         
         self.QA_CHAIN_PROMPT = PromptTemplate(
             input_variables=["context", "question"],

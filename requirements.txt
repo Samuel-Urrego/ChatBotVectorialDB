@@ -12,5 +12,6 @@ python-telegram-bot==22.7
 gunicorn==23.0.0
 # Base dependencies to avoid backtracking
 pydantic==2.11.7
+pydantic-core==2.33.2
 dataclasses-json==0.6.7
-numpy>=1.26.0
+numpy>=2.1.0
