@@ -38,3 +38,16 @@ data/*.pdf
 # IDEs
 .vscode/
 .idea/
+
+# .NET / Visual Studio
+frontend/**/bin/
+frontend/**/obj/
+frontend/**/.vs/
+frontend/**/*.user
+frontend/**/*.suo
+frontend/**/*.userosscache
+frontend/**/*.sln.docstates
+frontend/**/AppPackages/
+frontend/**/BundleArtifacts/
+frontend/**/Generated\ Files/
+frontend/**/_NavigationPropertyCache.v2

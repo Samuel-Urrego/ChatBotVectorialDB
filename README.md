@@ -10,6 +10,7 @@ ChatBotVectorialDB es un backend profesional desarrollado con **FastAPI**, **Lan
 - **Base de Datos Vectorial**: Integración con Pinecone para búsquedas semánticas rápidas.
 - **Asistente Especializado**: Prompt de sistema configurado para actuar como un asistente legal corporativo estricto.
 - **CORS Configurado**: Listo para ser consumido por aplicaciones Blazor o cualquier cliente frontend.
+- **Floating Chat UI**: Interfaz web moderna e interactiva incluida en la carpeta `/frontend`.
 
 ## 🛠️ Tecnologías
 
@@ -105,6 +106,13 @@ El backend está pre-configurado para permitir peticiones desde:
 - `http://localhost:5001`
 
 *(Puedes ajustar esto en `app/main.py`)*
+
+---
+
+## 🎨 Frontend: Floating Chat Component
+Este repositorio incluye un componente de chat flotante desarrollado en **Blazor WebAssembly** diseñado para integrarse fácilmente con este backend.
+
+Para más detalles, consulta la documentación en [/frontend/README.md](./frontend/README.md).
 
 ## 📄 Licencia
 Este proyecto es de uso libre bajo la licencia MIT.
