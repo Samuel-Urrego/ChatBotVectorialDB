@@ -2,17 +2,18 @@ from typing import List, Dict, Any
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_pinecone import PineconeVectorStore
 from langchain_classic.chains import RetrievalQA
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 from pinecone import Pinecone, ServerlessSpec
 from app.core.config import settings
 
 class ChatService:
     def __init__(self):
-        # Initialize Pinecone client to check/create index
+        # Initialize Pinecone client
         pc = Pinecone(api_key=settings.PINECONE_API_KEY)
         index_name = settings.PINECONE_INDEX_NAME
         
-        # Handle placeholder region from .env
         region = settings.PINECONE_ENVIRONMENT
         if not region or "your_pinecone_environment" in region:
             region = "us-east-1"
@@ -22,10 +23,7 @@ class ChatService:
                 name=index_name,
                 dimension=2048,
                 metric='cosine',
-                spec=ServerlessSpec(
-                    cloud='aws',
-                    region=region
-                )
+                spec=ServerlessSpec(cloud='aws', region=region)
             )
 
         self.embeddings = OpenAIEmbeddings(
@@ -44,45 +42,50 @@ class ChatService:
             openai_api_key=settings.OPENAI_API_KEY
         )
         
-        # Custom strict prompt for legal corporate assistant
+        # Custom prompt
         template = """Eres un asistente legal corporativo. Responde ÚNICAMENTE basándote en el contexto proporcionado. 
 Si la respuesta no está en el reglamento, di que no lo sabes.
 
 Contexto:
 {context}
 
-Pregunta: {question}
+Pregunta: {input}
 Respuesta Legal:"""
         
         self.QA_CHAIN_PROMPT = PromptTemplate(
-            input_variables=["context", "question"],
+            input_variables=["context", "input"],
             template=template,
         )
 
     def get_answer_with_sources(self, question: str) -> Dict[str, Any]:
+        # Legacy method using RetrievalQA
         qa_chain = RetrievalQA.from_chain_type(
             self.llm,
             chain_type="stuff",
             retriever=self.vector_store.as_retriever(search_kwargs={"k": 3}),
-            chain_type_kwargs={"prompt": self.QA_CHAIN_PROMPT},
+            chain_type_kwargs={"prompt": self.QA_CHAIN_PROMPT.rename_parameter("input", "question")},
             return_source_documents=True
         )
-        
         result = qa_chain.invoke({"query": question})
+        sources = [doc.metadata.get("source", "Unknown") for doc in result["source_documents"]]
+        return {"answer": result["result"], "sources": list(set(sources))}
+
+    async def get_answer_stream(self, question: str):
+        # Modern LCEL implementation (more resilient to import errors)
+        retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
         
-        # Extract source metadata (like filename or page)
-        sources = []
-        for doc in result["source_documents"]:
-            source_info = doc.metadata.get("source", "Unknown")
-            page_info = doc.metadata.get("page", "")
-            sources.append(f"{source_info} (página {page_info})" if page_info else source_info)
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+
+        # Create the LCEL chain
+        rag_chain = (
+            {"context": retriever | format_docs, "input": RunnablePassthrough()}
+            | self.QA_CHAIN_PROMPT
+            | self.llm
+            | StrOutputParser()
+        )
         
-        # Unique sources
-        unique_sources = list(set(sources))
-        
-        return {
-            "answer": result["result"],
-            "sources": unique_sources
-        }
+        async for chunk in rag_chain.astream(question):
+            yield chunk
 
 chat_service = ChatService()
