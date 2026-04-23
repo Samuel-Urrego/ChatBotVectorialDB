@@ -8,6 +8,7 @@ router = APIRouter()
 @router.post("/ask")
 async def ask_question(request: ChatRequest):
     try:
+        print(f"QUESTION RECEIVED: {request.question}")
         return StreamingResponse(
             chat_service.get_answer_stream(request.question),
             media_type="text/plain"

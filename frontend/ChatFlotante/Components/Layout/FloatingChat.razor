@@ -1,21 +1,37 @@
-﻿@using System.Net.Http.Json
+@using System.Net.Http.Json
 @inject HttpClient Http
 
 <div class="chat-container">
+    @if (isShowingSplash)
+    {
+        <div class="full-screen-awake">
+            <img src="@(isClosing ? "cerdo.jpg" : "logo-awake.jpg")" class="mega-pig" />
+            <h1 class="wake-text">@splashText</h1>
+        </div>
+    }
+
     @if (!isExpanded)
     {
         <button class="chat-launcher" @onclick="ToggleChat">
-            @* Si falla la imagen, el estilo del botón permite ver el fondo azul *@
-            <img src="logo-bot.png" alt="🤖" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"
-                 onerror="this.style.display='none'" />
+            @if (isWakingUp)
+            {
+                <img src="logo-awake.jpg" alt="Awake" class="logo-awake" />
+            }
+            else
+            {
+                <img src="logo-sleep.jpg" alt="Sleep" />
+            }
         </button>
     }
     else
     {
         <div class="chat-window">
             <div class="chat-header">
-                <span>Asistente AI</span>
-                <button @onclick="ToggleChat" style="background:none; border:none; color:white; cursor:pointer;">✕</button>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="logo-awake.jpg" alt="Awake" class="logo-awake" style="width:35px; height:35px; border-radius:50%; border:2px solid white;" />
+                    <span>GeorgeGPT</span>
+                </div>
+                <button class="close-btn" @onclick="ToggleChat">✕</button>
             </div>
             <div class="chat-body">
                 @foreach (var msg in messages)
@@ -24,12 +40,19 @@
                         @msg.Content
                     </div>
                 }
+                @if (isLoading)
+                {
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                }
             </div>
-            <div class="chat-footer" style="padding: 10px; display: flex;">
+            <div class="chat-footer">
                 <input @bind="userInput" @onkeyup="HandleKeyUp"
-                       style="flex:1; border-radius:20px; padding:5px 15px; border:1px solid #ccc;"
                        placeholder="Escribe aquí..." />
-                <button @onclick="SendMessage" style="margin-left:5px; background:none; border:none; color:#004a99;">➤</button>
+                <button @onclick="SendMessage">➤</button>
             </div>
         </div>
     }
@@ -37,12 +60,43 @@
 
 @code {
     private bool isExpanded = false;
+    private bool isShowingSplash = false;
+    private bool isClosing = false;
+    private bool isWakingUp = false; // Mantenemos para compatibilidad con el launcher si se usa
+    private string splashText = "¡Hola!";
+    private bool isLoading = false;
     private string userInput = "";
     private List<ChatMessage> messages = new() {
         new ChatMessage { Role = "bot", Content = "¡Hola! Soy tu asistente personal. ¿En qué puedo ayudarte?" }
     };
 
-    private void ToggleChat() => isExpanded = !isExpanded;
+    private async Task ToggleChat()
+    {
+        if (!isExpanded)
+        {
+            // Secuencia de APERTURA
+            isClosing = false;
+            splashText = "¡Hola!";
+            isShowingSplash = true;
+            isWakingUp = true; // Para el launcher
+            StateHasChanged();
+            await Task.Delay(2000); 
+            isExpanded = true;
+            isShowingSplash = false;
+            isWakingUp = false;
+        }
+        else
+        {
+            // Secuencia de CIERRE
+            isExpanded = false; // Cerrar la ventana inmediatamente
+            isClosing = true;
+            splashText = "BYE!";
+            isShowingSplash = true;
+            StateHasChanged();
+            await Task.Delay(2000); // Dar tiempo al splash de despedida
+            isShowingSplash = false;
+        }
+    }
 
     private async Task HandleKeyUp(KeyboardEventArgs e)
     {
@@ -56,41 +110,55 @@
         var userText = userInput;
         messages.Add(new ChatMessage { Role = "user", Content = userText });
         userInput = "";
-
-        // Creamos el mensaje del bot vacío para ir llenándolo
-        var botMessage = new ChatMessage { Role = "bot", Content = "" };
-        messages.Add(botMessage);
+        
+        isLoading = true;
+        StateHasChanged();
 
         try
         {
             var request = new { question = userText };
-            // Usamos PostAsync para tener control total sobre el stream de respuesta
-            var response = await Http.PostAsJsonAsync("http://127.0.0.1:8000/api/v1/ask", request);
+            var response = await Http.PostAsJsonAsync("api/v1/ask", request);
 
             if (response.IsSuccessStatusCode)
             {
                 using var stream = await response.Content.ReadAsStreamAsync();
                 using var reader = new System.IO.StreamReader(stream);
 
-                // Leemos el stream caracter por caracter o por fragmentos pequeños
+                var botMessage = new ChatMessage { Role = "bot", Content = "" };
+                messages.Add(botMessage);
+                
+                // Quitamos el indicador de carga cuando empieza a llegar el texto
+                isLoading = false; 
+                StateHasChanged();
+
                 while (!reader.EndOfStream)
                 {
-                    // Leemos el siguiente caracter disponible
                     char[] buffer = new char[1];
                     int readCount = await reader.ReadAsync(buffer, 0, 1);
 
                     if (readCount > 0)
                     {
-                        botMessage.Content += buffer[0]; // Agregamos el caracter al mensaje
-                        StateHasChanged(); // Forzamos a Blazor a re-renderizar la UI
-                        await Task.Delay(15); // El toque mágico para el efecto de escritura
+                        botMessage.Content += buffer[0];
+                        StateHasChanged();
+                        await Task.Delay(10); // Velocidad pro
                     }
                 }
+            }
+            else 
+            {
+                isLoading = false;
+                messages.Add(new ChatMessage { Role = "bot", Content = "Lo siento, hubo un error con el servidor." });
             }
         }
         catch (Exception ex)
         {
-            botMessage.Content = "Error de conexión: " + ex.Message;
+            isLoading = false;
+            messages.Add(new ChatMessage { Role = "bot", Content = "Error de conexión." });
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
