@@ -20,7 +20,7 @@ class ChatService:
         if index_name not in pc.list_indexes().names():
             pc.create_index(
                 name=index_name,
-                dimension=1024,
+                dimension=3072,
                 metric='cosine',
                 spec=ServerlessSpec(
                     cloud='aws',
