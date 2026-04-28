@@ -30,7 +30,7 @@ class ChatService:
 
         self.embeddings = OpenAIEmbeddings(
             model="text-embedding-3-large",
-            dimensions=1024,
+            dimensions=3072,
             openai_api_key=settings.OPENAI_API_KEY
         )
         self.vector_store = PineconeVectorStore(
