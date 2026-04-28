@@ -1,5 +1,4 @@
 import os
-import sys
 from dotenv import load_dotenv
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -7,67 +6,59 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
 
-# Load environment variables
 load_dotenv()
 
 def ingest_documents(directory_path: str = "./data"):
-    # 1. Initialize Pinecone
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-    index_name = os.getenv("PINECONE_INDEX_NAME", "chatbotvectorialdb")
+    index_name = os.getenv("PINECONE_INDEX_NAME", "chatbot-medico-db")
     
-    # Handle placeholder region
+    # 1. Configuración de dimensiones (Ajustado a 3072 para máxima precisión médica)
+    dimensions = 3072 
     region = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
-    if not region or "your_pinecone_environment" in region:
-        region = "us-east-1"
-    
-    # Check if index exists, if not create it
+
     if index_name not in pc.list_indexes().names():
-        print(f"Creating index: {index_name} in region {region}")
+        print(f"Creando índice: {index_name}")
         pc.create_index(
             name=index_name,
-            dimension=1024,
+            dimension=dimensions,
             metric='cosine',
-            spec=ServerlessSpec(
-                cloud='aws',
-                region=region
-            )
+            spec=ServerlessSpec(cloud='aws', region=region)
         )
 
-    # 2. Load PDFs from directory
-    print(f"Loading PDFs from: {directory_path}")
+    # 2. Carga con PyPDFLoader (ideal para manuales técnicos)
+    print(f"Cargando manuales médicos desde: {directory_path}")
     loader = DirectoryLoader(
         directory_path,
-        glob="./*.pdf",
+        glob="**/*.pdf", # Busca también en subcarpetas
         loader_cls=PyPDFLoader
     )
     data = loader.load()
     
-    if not data:
-        print("No PDF files found in the directory.")
-        return
-
-    # 3. Split text into chunks
-    print(f"Splitting {len(data)} documents into chunks...")
+    # 3. Splitting optimizado para protocolos y dosis
+    # Aumentamos el overlap para no perder contexto en tablas o listas
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
+        chunk_size=1200,
+        chunk_overlap=300,
+        length_function=len,
+        add_start_index=True,
     )
     docs = text_splitter.split_documents(data)
 
-    # 4. Generate embeddings and upload to Pinecone
-    print(f"Generating embeddings and uploading {len(docs)} chunks to Pinecone...")
+    # 4. Embeddings de alta resolución
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-large",
-        dimensions=1024
+        dimensions=dimensions 
     )
     
+    # 5. Carga masiva (Batch upload)
+    print(f"Subiendo {len(docs)} fragmentos a Pinecone...")
     PineconeVectorStore.from_documents(
         docs,
         embeddings,
         index_name=index_name
     )
     
-    print("Ingestion completed successfully!")
+    print("¡Ingesta médica completada con éxito!")
 
 if __name__ == "__main__":
     ingest_documents()
