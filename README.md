@@ -1,110 +1,71 @@
-# ChatBotVectorialDB 🚀
-
-ChatBotVectorialDB es un backend profesional desarrollado con **FastAPI**, **LangChain** y **Pinecone**. Está diseñado para actuar como un asistente legal corporativo capaz de responder preguntas basadas exclusivamente en documentos PDF procesados mediante técnicas de RAG (Retrieval-Augmented Generation).
-
-## 🌟 Características
-
-- **Ingesta de Documentos**: Carga automática de múltiples PDFs desde una carpeta local.
-- **Procesamiento de Texto**: División inteligente de texto con solapamiento para preservar el contexto.
-- **Embeddings de Alta Calidad**: Uso de `text-embedding-3-large` de OpenAI con 2048 dimensiones.
-- **Base de Datos Vectorial**: Integración con Pinecone para búsquedas semánticas rápidas.
-- **Asistente Especializado**: Prompt de sistema configurado para actuar como un asistente legal corporativo estricto.
-- **CORS Configurado**: Listo para ser consumido por aplicaciones Blazor o cualquier cliente frontend.
-
-## 🛠️ Tecnologías
-
-- [FastAPI](https://fastapi.tiangolo.com/) - Framework web.
-- [LangChain](https://www.langchain.com/) - Orquestación de LLMs y RAG.
-- [Pinecone](https://www.pinecone.io/) - Base de datos vectorial.
-- [OpenAI](https://openai.com/) - LLM (GPT-4o-mini) y Embeddings.
-
+<h1 align="center">ChatBotVectorialDB // Corporate Legal AI</h1>
+<p align="center">
+  <strong>Backend profesional de orquestación RAG para asistencia legal corporativa.</strong>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/FastAPI-0.109.0-009688?style=flat-square&logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python" alt="Python" />
+  <img src="https://img.shields.io/badge/LangChain-v0.1-1C3C3C?style=flat-square" alt="LangChain" />
+  <img src="https://img.shields.io/badge/Pinecone-VectorDB-000000?style=flat-square" alt="Pinecone" />
+  <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=flat-square&logo=openai" alt="OpenAI" />
+</p>
+ChatBotVectorialDB es un motor de backend de alto rendimiento desarrollado con **FastAPI**, **LangChain** y **Pinecone**. Implementa técnicas avanzadas de **RAG (Retrieval-Augmented Generation)** para transformar documentos legales estáticos en un asistente corporativo inteligente y estricto.
+## 🌟 Key Features
+- **Automated Ingestion**: Ingesta masiva de PDFs con fragmentación inteligente y solapamiento de contexto.
+- **High-Dim Embeddings**: Procesamiento vectorial mediante `text-embedding-3-large` (2048 dims).
+- **Strict Logic**: Prompt de sistema blindado para comportamiento legal corporativo profesional.
+- **Scale-Ready**: Integración nativa con Pinecone Serverless y CORS pre-configurado para clientes modernos.
+## 🛠️ Logic Stack
+| Component | Technology |
+|-----------|------------|
+| **Framework** | FastAPI |
+| **Orchestrator** | LangChain |
+| **Vector Engine** | Pinecone |
+| **Model** | GPT-4o-mini |
+| **Embeddings** | OpenAI text-embedding-3-large |
 ---
-
-## 🚀 Instalación y Configuración
-
-### 1. Clonar el repositorio
+## 🚀 Deployment & Config
+### 1. Environment Setup
 ```bash
+# Clone the logic
 git clone https://github.com/tu-usuario/ChatBotVectorialDB.git
 cd ChatBotVectorialDB
-```
-
-### 2. Configurar el Entorno Virtual
-```bash
+# Activate virtual environment
 python -m venv venv
-# En Windows:
-.\venv\Scripts\activate
-# En Linux/Mac:
-source venv/bin/activate
-```
-
-### 3. Instalar Dependencias
-```bash
+source venv/bin/activate  # venv\Scripts\activate on Windows
 pip install -r requirements.txt
-```
+2. Signal Transmission (Env Vars)
+Crea un archivo .env con los siguientes parámetros de sistema:
 
-### 4. Variables de Entorno
-Crea un archivo `.env` en la raíz del proyecto y completa tus credenciales:
-```env
+env
 OPENAI_API_KEY=tu_clave_de_openai
 PINECONE_API_KEY=tu_clave_de_pinecone
 PINECONE_INDEX_NAME=chatbotvectorialdb
-PINECONE_ENVIRONMENT=us-east-1
-DATABASE_URL=sqlite:///./sql_app.db
-```
+📖 System Operations
+Ingestion Mode
+Procesa los documentos en la carpeta ./data y sincroniza con la base de datos vectorial:
 
----
-
-## 📖 Cómo Usar
-
-### 1. Preparar los Datos
-Coloca todos los archivos PDF que deseas indexar en la carpeta `./data`.
-
-### 2. Ingestar Documentos
-Ejecuta el script de ingesta para procesar los PDFs y subirlos a Pinecone:
-```bash
+bash
 python ingest.py
-```
+API Execution
+Lanza el servidor de producción:
 
-### 3. Iniciar el Servidor API
-Lanza el backend con Uvicorn:
-```bash
+bash
 uvicorn app.main:app --reload
-```
-La API estará disponible en `http://localhost:8000`.
+📡 API Endpoints
+POST /api/v1/ask
+Transmite una consulta al núcleo de IA.
 
----
+Request:
 
-## 📡 Endpoints de la API
-
-### `POST /api/v1/ask`
-Realiza una pregunta al asistente legal.
-
-**Request Body:**
-```json
+json
 {
   "question": "¿Cuál es el procedimiento para X según el reglamento?"
 }
-```
+Response:
 
-**Response:**
-```json
+json
 {
   "answer": "La respuesta generada por la IA...",
-  "sources": [
-    "documento_legal_1.pdf (página 5)",
-    "reglamento_interno.pdf (página 12)"
-  ]
+  "sources": ["doc_1.pdf (pág 5)", "reglamento.pdf (pág 12)"]
 }
-```
-
----
-
-## 🔒 Seguridad (CORS)
-El backend está pre-configurado para permitir peticiones desde:
-- `http://localhost:5000`
-- `http://localhost:5001`
-
-*(Puedes ajustar esto en `app/main.py`)*
-
-## 📄 Licencia
-Este proyecto es de uso libre bajo la licencia MIT.
